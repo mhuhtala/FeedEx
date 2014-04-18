@@ -58,6 +58,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.text.Html;
+import android.text.TextUtils;
 import android.util.Xml;
 
 import net.fred.feedex.Constants;
@@ -73,7 +75,6 @@ import net.fred.feedex.utils.ArticleTextExtractor;
 import net.fred.feedex.utils.HtmlUtils;
 import net.fred.feedex.utils.NetworkUtils;
 import net.fred.feedex.utils.PrefUtils;
-import net.fred.feedex.widget.TickerWidgetProvider;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -109,7 +110,6 @@ public class FetcherService extends IntentService {
     private static final int FETCHMODE_REENCODE = 2;
 
     private static final String CHARSET = "charset=";
-    private static final String COUNT = "COUNT(*)";
     private static final String CONTENT_TYPE_TEXT_HTML = "text/html";
     private static final String HREF = "href=\"";
 
@@ -164,7 +164,7 @@ public class FetcherService extends IntentService {
 
             if (newCount > 0) {
                 if (PrefUtils.getBoolean(PrefUtils.NOTIFICATIONS_ENABLED, true)) {
-                    Cursor cursor = getContentResolver().query(EntryColumns.CONTENT_URI, new String[]{COUNT}, EntryColumns.WHERE_UNREAD, null, null);
+                    Cursor cursor = getContentResolver().query(EntryColumns.CONTENT_URI, new String[]{Constants.DB_COUNT}, EntryColumns.WHERE_UNREAD, null, null);
 
                     cursor.moveToFirst();
                     newCount = cursor.getInt(0); // The number has possibly changed
@@ -213,9 +213,9 @@ public class FetcherService extends IntentService {
         }
     }
 
-    public static boolean hasTasks(long entryId) {
+    public static boolean hasMobilizationTask(long entryId) {
         Cursor cursor = MainApplication.getContext().getContentResolver().query(TaskColumns.CONTENT_URI, TaskColumns.PROJECTION_ID,
-                TaskColumns.ENTRY_ID + '=' + entryId, null, null);
+                TaskColumns.ENTRY_ID + '=' + entryId + Constants.DB_AND + TaskColumns.IMG_URL_TO_DL + Constants.DB_IS_NULL, null, null);
 
         boolean result = cursor.getCount() > 0;
         cursor.close();
@@ -268,14 +268,26 @@ public class FetcherService extends IntentService {
 
             if (entryCursor.moveToFirst()) {
                 if (entryCursor.isNull(entryCursor.getColumnIndex(EntryColumns.MOBILIZED_HTML))) { // If we didn't already mobilized it
-                    int linkPosition = entryCursor.getColumnIndex(EntryColumns.LINK);
+                    int linkPos = entryCursor.getColumnIndex(EntryColumns.LINK);
+                    int abstractHtmlPos = entryCursor.getColumnIndex(EntryColumns.ABSTRACT);
                     HttpURLConnection connection = null;
 
                     try {
-                        String link = entryCursor.getString(linkPosition);
+                        String link = entryCursor.getString(linkPos);
+
+                        // Try to find a text indicator for better content extraction
+                        String contentIndicator = null;
+                        String text = entryCursor.getString(abstractHtmlPos);
+                        if (!TextUtils.isEmpty(text)) {
+                            text = Html.fromHtml(text).toString();
+                            if (text.length() > 43) {
+                                contentIndicator = text.substring(0, 40);
+                            }
+                        }
+
                         connection = NetworkUtils.setupConnection(link);
 
-                        String mobilizedHtml = ArticleTextExtractor.extractContent(NetworkUtils.getConnectionInputStream(connection));
+                        String mobilizedHtml = ArticleTextExtractor.extractContent(connection.getInputStream(), contentIndicator);
 
                         if (mobilizedHtml != null) {
                             mobilizedHtml = HtmlUtils.improveHtmlContent(mobilizedHtml, NetworkUtils.getBaseUrl(link));
@@ -284,7 +296,7 @@ public class FetcherService extends IntentService {
                             if (cr.update(entryUri, values, null, null) > 0) {
                                 success = true;
                                 operations.add(ContentProviderOperation.newDelete(TaskColumns.CONTENT_URI(taskId)).build());
-                                if (PrefUtils.getBoolean(PrefUtils.FETCH_PICTURES, false)) {
+                                if (NetworkUtils.needDownloadPictures()) {
                                     addImagesToDownload(String.valueOf(entryId), HtmlUtils.getImageURLs(mobilizedHtml));
                                 }
                             }
@@ -408,8 +420,6 @@ public class FetcherService extends IntentService {
 
         executor.shutdownNow(); // To purge all threads
 
-        TickerWidgetProvider.updateWidget(this);
-
         return globalResult;
     }
 
@@ -439,11 +449,11 @@ public class FetcherService extends IntentService {
 
                 handler = new RssAtomParser(new Date(cursor.getLong(realLastUpdatePosition)), id, cursor.getString(titlePosition), feedUrl,
                         cursor.getInt(retrieveFullscreenPosition) == 1);
-                handler.setFetchImages(PrefUtils.getBoolean(PrefUtils.FETCH_PICTURES, false));
+                handler.setFetchImages(NetworkUtils.needDownloadPictures());
 
                 if (fetchMode == 0) {
                     if (contentType != null && contentType.startsWith(CONTENT_TYPE_TEXT_HTML)) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(NetworkUtils.getConnectionInputStream(connection)));
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
                         String line;
                         int posStart = -1;
@@ -510,7 +520,7 @@ public class FetcherService extends IntentService {
                         }
 
                     } else {
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(NetworkUtils.getConnectionInputStream(connection)));
+                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
                         char[] chars = new char[20];
 
@@ -549,19 +559,19 @@ public class FetcherService extends IntentService {
 
                             int index2 = contentType.indexOf(';', index);
 
-                            InputStream inputStream = NetworkUtils.getConnectionInputStream(connection);
+                            InputStream inputStream = connection.getInputStream();
                             Xml.parse(inputStream,
                                     Xml.findEncodingByName(index2 > -1 ? contentType.substring(index + 8, index2) : contentType.substring(index + 8)),
                                     handler);
                         } else {
-                            InputStreamReader reader = new InputStreamReader(NetworkUtils.getConnectionInputStream(connection));
+                            InputStreamReader reader = new InputStreamReader(connection.getInputStream());
                             Xml.parse(reader, handler);
                         }
                         break;
                     }
                     case FETCHMODE_REENCODE: {
                         ByteArrayOutputStream ouputStream = new ByteArrayOutputStream();
-                        InputStream inputStream = NetworkUtils.getConnectionInputStream(connection);
+                        InputStream inputStream = connection.getInputStream();
 
                         byte[] byteBuffer = new byte[4096];
 
@@ -577,7 +587,8 @@ public class FetcherService extends IntentService {
                         if (start > -1) {
                             Xml.parse(
                                     new StringReader(new String(ouputStream.toByteArray(),
-                                            xmlText.substring(start + 10, xmlText.indexOf('"', start + 11)))), handler);
+                                            xmlText.substring(start + 10, xmlText.indexOf('"', start + 11)))), handler
+                            );
                         } else {
                             // use content type
                             if (contentType != null) {

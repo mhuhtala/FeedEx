@@ -23,6 +23,7 @@
 
     <!-- GENERAL -->
     <string name="about_feedex">A proposito di FeedEx</string>
+    <string name="welcome_title">Welcome to FeedEx. Would you like to add one feed?</string>
     <string name="never">mai</string>
     <string name="update">Aggiornamento</string>
     <string name="colon">:\u00A0</string>
@@ -93,6 +94,17 @@
     </string>
     <string name="to_group_above">Sopra il gruppo</string>
     <string name="to_group_into">Dentro il gruppo</string>
+    <string name="add_custom_feed">Add a custom feed or search for one</string>
+    <string name="google_news_title">Google News topics</string>
+    <string name="google_news_indicator">Select one or several topics to add. Some of them may not be provided by Google for your language.</string>
+    <string name="google_news_top_stories">Top Stories</string>
+    <string name="google_news_world">World</string>
+    <string name="google_news_business">Business</string>
+    <string name="google_news_technology">Technology</string>
+    <string name="google_news_entertainment">Entertainment</string>
+    <string name="google_news_sports">Sports</string>
+    <string name="google_news_science">Science</string>
+    <string name="google_news_health">Health</string>
 
     <!-- ENTRIES -->
     <string name="all">Articoli</string>
@@ -131,8 +143,6 @@
     <string name="settings_refresh_enabled_description">Attiva l\'aggiornamento automatico dei feed
     </string>
     <string name="settings_refresh_interval">Intervallo</string>
-    <string name="settings_refresh_interval_description">Intervallo tra due aggiornamenti automatici
-    </string>
     <string name="settings_category_notifications">Notifiche</string>
     <string name="settings_notifications_enabled">Attiva notifiche</string>
     <string name="settings_notifications_enabled_description">Attiva le notifiche all\'arrivo di nuovi
@@ -150,22 +160,12 @@
     <string name="settings_lighttheme">Tema chiaro</string>
     <string name="settings_lighttheme_description">Utilizza il tema chiaro</string>
     <string name="settings_keep_time">Tempo di archiviazione</string>
-    <string name="settings_keep_time_description">Indica per quanto tempo gli articoli saranno
-        conservati
-    </string>
-    <string name="settings_disable_pictures">Disabilita immagini</string>
-    <string name="settings_disable_pictures_description">Le immagini non saranno scaricate e
-        visualizzate
-    </string>
-    <string name="settings_fetch_pictures">Scarica immagini</string>
-    <string name="settings_fetch_pictures_description">Scarica tutte le immagini e conservale
-        localmente
-    </string>
+    <string name="settings_fetch_picture_mode">Fetch picture mode</string>
     <string name="settings_font_size">Dimensione testo</string>
-    <string name="settings_font_size_description">Dimensione del testo dei contenuti degli articoli
-    </string>
     <string name="settings_display_oldest_first">Ordinamento articoli</string>
     <string name="settings_display_oldest_first_description">Mostra gli articoli più vecchi prima</string>
+    <string name="settings_display_entries_fullscreen">Auto-fullscreen entries</string>
+    <string name="settings_display_entries_fullscreen_description">Automatically display entries in fullscreen</string>
     <string name="settings_refresh_on_open">Aggiorna feed all\'apertura</string>
     <string name="settings_refresh_on_open_description">Aggiorna tutti i feed all\'apertura
         dell\'applicazione
@@ -189,8 +189,8 @@
     <string name="settings_proxy_type">Tipo</string>
 
     <plurals name="number_of_new_entries">
-        <item quantity="one">One new entry</item>
-        <item quantity="other">%d new entries</item>
+        <item quantity="one">Un nuovo articolo</item>
+        <item quantity="other">%d nuovi articoli</item>
     </plurals>
 
     <string-array name="settings_intervals">
@@ -222,6 +222,11 @@
         <item>+1</item>
         <item>+2</item>
         <item>+3</item>
+    </string-array>
+    <string-array name="settings_fetch_picture_modes">
+        <item>Never display pictures</item>
+        <item>Preload pictures in Wi-Fi only</item>
+        <item>Always preload pictures</item>
     </string-array>
 
 </resources>

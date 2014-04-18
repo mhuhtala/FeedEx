@@ -22,20 +22,21 @@
 <resources>
 
     <!-- GENERAL -->
-    <string name="about_feedex">About FeedEx</string>
+    <string name="about_feedex">Про FeedEx</string>
+    <string name="welcome_title">Welcome to FeedEx. Would you like to add one feed?</string>
     <string name="never">никогда</string>
     <string name="update">Обновление</string>
     <string name="colon">:\u00A0</string>
     <string name="menu_settings">Настройки</string>
     <string name="menu_refresh">Обновить</string>
     <string name="menu_all_read">Пометить все как прочитанное</string>
-    <string name="feedex_feeds">FeedEx корма</string>
+    <string name="feedex_feeds">FeedEx ленты</string>
     <string name="error">Ошибка</string>
     <string name="network_error">Нет подключения к сети</string>
     <string name="loading">Загрузка…</string>
     <string name="no_result">Нет результатов</string>
-    <string name="drawer_open">Open navigation drawer</string>
-    <string name="drawer_close">Close navigation drawer</string>
+    <string name="drawer_open">Открыть меню навигации</string>
+    <string name="drawer_close">Закрыть меню навигации</string>
     <string name="back_again_to_quit">Нажмите "Назад" еще раз, чтобы выйти</string>
 
     <!-- FEEDS -->
@@ -45,7 +46,7 @@
     <string name="no_filters">Нет фильтров</string>
     <string name="context_menu_delete">Удалить</string>
     <string name="edit_feed_title">Редактировать ленту</string>
-    <string name="menu_edit_feeds">Edit feeds</string>
+    <string name="menu_edit_feeds">Редактировать ленты</string>
     <string name="new_feed_title">Новая лента</string>
     <string name="context_menu_edit">Редактировать</string>
     <string name="menu_add_group">Добавить группу</string>
@@ -95,6 +96,17 @@
     </string>
     <string name="to_group_above">Над группой</string>
     <string name="to_group_into">Внутрь группы</string>
+    <string name="add_custom_feed">Add a custom feed or search for one</string>
+    <string name="google_news_title">Google News topics</string>
+    <string name="google_news_indicator">Select one or several topics to add. Some of them may not be provided by Google for your language.</string>
+    <string name="google_news_top_stories">Top Stories</string>
+    <string name="google_news_world">World</string>
+    <string name="google_news_business">Business</string>
+    <string name="google_news_technology">Technology</string>
+    <string name="google_news_entertainment">Entertainment</string>
+    <string name="google_news_sports">Sports</string>
+    <string name="google_news_science">Science</string>
+    <string name="google_news_health">Health</string>
 
     <!-- ENTRIES -->
     <string name="all">Новости</string>
@@ -116,10 +128,10 @@
     <string name="see_enclosure">Показать вложение</string>
     <string name="see_link">Открыть в браузере</string>
     <string name="cant_open_link">Не найдено приложений для открытия этой ссылки</string>
-    <string name="open_enclosure">Open enclosure</string>
+    <string name="open_enclosure">Открыть вложение</string>
     <string name="file">File</string>
-    <string name="download_and_save">Download and save</string>
-    <string name="open_link">Open link</string>
+    <string name="download_and_save">Загрузить и сохранить</string>
+    <string name="open_link">Открыть ссылку</string>
 
     <!-- WIDGET -->
     <string name="red">Красный</string>
@@ -133,8 +145,6 @@
     <string name="settings_refresh_enabled_description">Включить автоматическое обновление лент
     </string>
     <string name="settings_refresh_interval">Интервал обновления</string>
-    <string name="settings_refresh_interval_description">Интервал между автоматическим обновлением
-    </string>
     <string name="settings_category_notifications">Уведомления</string>
     <string name="settings_notifications_enabled">Включить уведомления</string>
     <string name="settings_notifications_enabled_description">Включить уведомления о новых записях
@@ -148,20 +158,12 @@
     <string name="settings_lighttheme">Светлая тема</string>
     <string name="settings_lighttheme_description">Использовать светлую тему</string>
     <string name="settings_keep_time">Время хранения новостей</string>
-    <string name="settings_keep_time_description">Новости старше установленной даты будут удалены
-    </string>
-    <string name="settings_disable_pictures">Выключить изображения</string>
-    <string name="settings_disable_pictures_description">Не показывать и не загружать никаких
-        изображений
-    </string>
-    <string name="settings_fetch_pictures">Загружать изображения</string>
-    <string name="settings_fetch_pictures_description">Загружать все изображения и сохранять их в
-        памяти
-    </string>
+    <string name="settings_fetch_picture_mode">Fetch picture mode</string>
     <string name="settings_font_size">Размер текста</string>
-    <string name="settings_font_size_description">Размер текста новостей</string>
     <string name="settings_display_oldest_first">Entries order</string>
     <string name="settings_display_oldest_first_description">Display oldest entries first</string>
+    <string name="settings_display_entries_fullscreen">Auto-fullscreen entries</string>
+    <string name="settings_display_entries_fullscreen_description">Automatically display entries in fullscreen</string>
     <string name="settings_refresh_on_open">Обновлять при запуске</string>
     <string name="settings_refresh_on_open_description">Обновлять все ленты пии запуске приложения
     </string>
@@ -185,6 +187,8 @@
 
     <plurals name="number_of_new_entries">
         <item quantity="one">One new entry</item>
+        <item quantity="few">%d new entries</item>
+        <item quantity="many">%d new entries</item>
         <item quantity="other">%d new entries</item>
     </plurals>
 
@@ -217,6 +221,11 @@
         <item>+1</item>
         <item>+2</item>
         <item>+3</item>
+    </string-array>
+    <string-array name="settings_fetch_picture_modes">
+        <item>Never display pictures</item>
+        <item>Preload pictures in Wi-Fi only</item>
+        <item>Always preload pictures</item>
     </string-array>
 
 </resources>

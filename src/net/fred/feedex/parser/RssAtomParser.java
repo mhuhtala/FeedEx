@@ -154,7 +154,7 @@ public class RssAtomParser extends DefaultHandler {
     private int newCount = 0;
     private final String feedName;
     private String feedTitle;
-    private String feedBaseUrl;
+    private final String feedBaseUrl;
     private boolean done = false;
     private final Date keepDateBorder;
     private boolean fetchImages = false;
@@ -561,7 +561,7 @@ public class RssAtomParser extends DefaultHandler {
             dateStr = dateStr.substring(coma + 2);
         }
 
-        dateStr = dateStr.replace("T", " ").replace("Z", "").replaceAll("  ", " ").trim(); // fix useless char
+        dateStr = dateStr.replaceAll("([0-9])T([0-9])", "$1 $2").replaceAll("Z$", "").replaceAll("  ", " ").trim(); // fix useless char
 
         // Replace bad timezones
         for (String[] timezoneReplace : TIMEZONES_REPLACE) {
@@ -590,7 +590,12 @@ public class RssAtomParser extends DefaultHandler {
 
     @Override
     public void error(SAXParseException e) throws SAXException {
-        // ignore small errors
+        // ignore errors
+    }
+
+    @Override
+    public void fatalError(SAXParseException e) throws SAXException {
+        // ignore errors
     }
 
     @Override
@@ -644,7 +649,6 @@ public class RssAtomParser extends DefaultHandler {
         }
 
         private final ArrayList<Rule> mFilters = new ArrayList<Rule>();
-        private boolean rejectEntriesByDefault = false;
 
         public FeedFilters(String feedId) {
             ContentResolver cr = MainApplication.getContext().getContentResolver();

@@ -23,6 +23,7 @@
 
     <!-- GENERAL -->
     <string name="about_feedex">About FeedEx</string>
+    <string name="welcome_title">Welcome to FeedEx. Would you like to add one feed?</string>
     <string name="never">nunca</string>
     <string name="update">Actualizar</string>
     <string name="colon">:\u00A0</string>
@@ -92,6 +93,17 @@
     </string>
     <string name="to_group_above">Encima del grupo</string>
     <string name="to_group_into">Al grupo</string>
+    <string name="add_custom_feed">Add a custom feed or search for one</string>
+    <string name="google_news_title">Google News topics</string>
+    <string name="google_news_indicator">Select one or several topics to add. Some of them may not be provided by Google for your language.</string>
+    <string name="google_news_top_stories">Top Stories</string>
+    <string name="google_news_world">World</string>
+    <string name="google_news_business">Business</string>
+    <string name="google_news_technology">Technology</string>
+    <string name="google_news_entertainment">Entertainment</string>
+    <string name="google_news_sports">Sports</string>
+    <string name="google_news_science">Science</string>
+    <string name="google_news_health">Health</string>
 
     <!-- ENTRIES -->
     <string name="all">Entradas</string>
@@ -131,9 +143,6 @@
         las fuentes.
     </string>
     <string name="settings_refresh_interval">Intervalo entre actualizaciones</string>
-    <string name="settings_refresh_interval_description">Define el tiempo que transcurre entre dos
-        actualizaciones automáticas.
-    </string>
     <string name="settings_category_notifications">Notificaciones</string>
     <string name="settings_notifications_enabled">Habilitar notificaciones</string>
     <string name="settings_notifications_enabled_description">Habilita las notificaciones de nuevas
@@ -151,18 +160,12 @@
     <string name="settings_lighttheme">Tema claro</string>
     <string name="settings_lighttheme_description">Usar el tema claro</string>
     <string name="settings_keep_time">Tiempo de retención de las entradas</string>
-    <string name="settings_keep_time_description">Las entradas que superen el timepo de retención
-        serán eliminadas.
-    </string>
-    <string name="settings_disable_pictures">Deshabilitar las imágenes</string>
-    <string name="settings_disable_pictures_description">No mostrar imágenes</string>
-    <string name="settings_fetch_pictures">Descargar imágenes</string>
-    <string name="settings_fetch_pictures_description">Descarga las imágenes localmente.</string>
+    <string name="settings_fetch_picture_mode">Fetch picture mode</string>
     <string name="settings_font_size">Tamaño del texto</string>
-    <string name="settings_font_size_description">Selecciona el tamaño del texto de las entradas.
-    </string>
     <string name="settings_display_oldest_first">Entries order</string>
     <string name="settings_display_oldest_first_description">Display oldest entries first</string>
+    <string name="settings_display_entries_fullscreen">Auto-fullscreen entries</string>
+    <string name="settings_display_entries_fullscreen_description">Automatically display entries in fullscreen</string>
     <string name="settings_refresh_on_open">Actualizar las fuentes al inicio</string>
     <string name="settings_refresh_on_open_description">Actualiza las fuentes al iniciar la
         aplicación.
@@ -222,6 +225,11 @@
         <item>+1</item>
         <item>+2</item>
         <item>+3</item>
+    </string-array>
+    <string-array name="settings_fetch_picture_modes">
+        <item>Never display pictures</item>
+        <item>Preload pictures in Wi-Fi only</item>
+        <item>Always preload pictures</item>
     </string-array>
 
 </resources>

@@ -50,8 +50,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 import android.os.Handler;
 
-import net.fred.feedex.MainApplication;
-import net.fred.feedex.R;
 import net.fred.feedex.parser.OPML;
 import net.fred.feedex.provider.FeedData.EntryColumns;
 import net.fred.feedex.provider.FeedData.FeedColumns;
@@ -63,7 +61,7 @@ import java.io.File;
 class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "FeedEx.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
     private static final String ALTER_TABLE = "ALTER TABLE ";
     private static final String ADD = " ADD ";
@@ -95,9 +93,6 @@ class DatabaseHelper extends SQLiteOpenHelper {
                             if (hasBackup) {
                                 // Perform an automated import of the backup
                                 OPML.importFromFile(OPML.BACKUP_OPML);
-                            } else {
-                                // No database and no backup, automatically add the default feeds
-                                OPML.importFromFile(MainApplication.getContext().getResources().openRawResource(R.raw.default_feeds));
                             }
                         } catch (Exception ignored) {
                         }
@@ -153,6 +148,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 6) {
             executeCatchedSQL(database, ALTER_TABLE + FilterColumns.TABLE_NAME + ADD + FilterColumns.IS_ACCEPT_RULE + ' ' + FeedData.TYPE_BOOLEAN);
+        }
+        if (oldVersion < 7) {
+            executeCatchedSQL(database, ALTER_TABLE + EntryColumns.TABLE_NAME + ADD + EntryColumns.FETCH_DATE + ' ' + FeedData.TYPE_DATE_TIME);
         }
     }
 

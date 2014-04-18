@@ -25,12 +25,13 @@ import android.content.Context;
 
 public final class Constants {
 
-    public static NotificationManager NOTIF_MGR = (NotificationManager) MainApplication.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+    public static final NotificationManager NOTIF_MGR = (NotificationManager) MainApplication.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
     public static final String INTENT_FROM_WIDGET = "fromWidget";
 
     public static final String FEED_ID = "feedid";
 
+    public static final String DB_COUNT = "COUNT(*)";
     public static final String DB_IS_TRUE = "=1";
     public static final String DB_IS_FALSE = "=0";
     public static final String DB_IS_NULL = " IS NULL";
@@ -71,4 +72,8 @@ public final class Constants {
     public static final String MIMETYPE_TEXT_PLAIN = "text/plain";
 
     public static final int UPDATE_THROTTLE_DELAY = 500;
+
+    public static final String FETCH_PICTURE_MODE_NEVER_DISPLAYED = "NEVER_DISPLAYED";
+    public static final String FETCH_PICTURE_MODE_WIFI_ONLY_PRELOAD = "WIFI_ONLY_PRELOAD";
+    public static final String FETCH_PICTURE_MODE_ALWAYS_PRELOAD = "ALWAYS_PRELOAD";
 }

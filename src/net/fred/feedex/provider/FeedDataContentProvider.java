@@ -48,6 +48,7 @@ import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -56,13 +57,17 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import net.fred.feedex.Constants;
+import net.fred.feedex.R;
 import net.fred.feedex.provider.FeedData.EntryColumns;
 import net.fred.feedex.provider.FeedData.FeedColumns;
 import net.fred.feedex.provider.FeedData.FilterColumns;
 import net.fred.feedex.provider.FeedData.TaskColumns;
 import net.fred.feedex.utils.NetworkUtils;
+
+import java.util.Date;
 
 public class FeedDataContentProvider extends ContentProvider {
 
@@ -115,6 +120,8 @@ public class FeedDataContentProvider extends ContentProvider {
         URI_MATCHER.addURI(FeedData.AUTHORITY, "entries/search/*", URI_SEARCH);
         URI_MATCHER.addURI(FeedData.AUTHORITY, "entries/search/*/#", URI_SEARCH_ENTRY);
     }
+
+    private final String[] MAX_PRIORITY = new String[]{"MAX(" + FeedColumns.PRIORITY + ")"};
 
     private DatabaseHelper mDatabaseHelper;
 
@@ -259,6 +266,8 @@ public class FeedDataContentProvider extends ContentProvider {
                 queryBuilder.appendWhere(new StringBuilder(EntryColumns._ID).append('=').append(uri.getPathSegments().get(1)));
                 break;
             }
+            default:
+                throw new IllegalArgumentException("Illegal query. Match code=" + matchCode);
         }
 
         SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
@@ -268,8 +277,6 @@ public class FeedDataContentProvider extends ContentProvider {
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
-
-    private final String[] MAXPRIORITY = new String[]{"MAX(" + FeedColumns.PRIORITY + ")"};
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
@@ -285,9 +292,9 @@ public class FeedDataContentProvider extends ContentProvider {
                 Cursor cursor;
                 if (values.containsKey(FeedColumns.GROUP_ID)) {
                     String groupId = values.getAsString(FeedColumns.GROUP_ID);
-                    cursor = query(FeedColumns.FEEDS_FOR_GROUPS_CONTENT_URI(groupId), MAXPRIORITY, null, null, null);
+                    cursor = query(FeedColumns.FEEDS_FOR_GROUPS_CONTENT_URI(groupId), MAX_PRIORITY, null, null, null);
                 } else {
-                    cursor = query(FeedColumns.GROUPS_CONTENT_URI, MAXPRIORITY, null, null, null);
+                    cursor = query(FeedColumns.GROUPS_CONTENT_URI, MAX_PRIORITY, null, null, null);
                 }
 
                 if (cursor.moveToFirst()) { // normally this is always the case with MAX()
@@ -313,11 +320,7 @@ public class FeedDataContentProvider extends ContentProvider {
             }
             case URI_ENTRIES_FOR_FEED: {
                 values.put(EntryColumns.FEED_ID, uri.getPathSegments().get(1));
-                newId = database.insert(EntryColumns.TABLE_NAME, null, values);
-                break;
-            }
-            case URI_ALL_ENTRIES:
-            case URI_ENTRIES: {
+                values.put(EntryColumns.FETCH_DATE, new Date().getTime());
                 newId = database.insert(EntryColumns.TABLE_NAME, null, values);
                 break;
             }
@@ -326,7 +329,7 @@ public class FeedDataContentProvider extends ContentProvider {
                 break;
             }
             default:
-                throw new IllegalArgumentException("Illegal insert");
+                throw new IllegalArgumentException("Illegal insert. Match code=" + matchCode);
         }
 
         if (newId > -1) {
@@ -467,6 +470,8 @@ public class FeedDataContentProvider extends ContentProvider {
                 where.append(TaskColumns._ID).append('=').append(uri.getPathSegments().get(1));
                 break;
             }
+            default:
+                throw new IllegalArgumentException("Illegal update. Match code=" + matchCode);
         }
 
         if (!TextUtils.isEmpty(selection)) {
@@ -654,6 +659,8 @@ public class FeedDataContentProvider extends ContentProvider {
                 where.append(TaskColumns._ID).append('=').append(uri.getPathSegments().get(1));
                 break;
             }
+            default:
+                throw new IllegalArgumentException("Illegal delete. Match code=" + matchCode);
         }
 
         if (!TextUtils.isEmpty(selection)) {
@@ -674,14 +681,40 @@ public class FeedDataContentProvider extends ContentProvider {
         return count;
     }
 
+    public static void addFeed(Context context, String url, String name, boolean retrieveFullText) {
+        ContentResolver cr = context.getContentResolver();
+
+        if (!url.startsWith(Constants.HTTP_SCHEME) && !url.startsWith(Constants.HTTPS_SCHEME)) {
+            url = Constants.HTTP_SCHEME + url;
+        }
+
+        Cursor cursor = cr.query(FeedColumns.CONTENT_URI, null, FeedColumns.URL + Constants.DB_ARG,
+                new String[]{url}, null);
+
+        if (cursor.moveToFirst()) {
+            cursor.close();
+            Toast.makeText(context, R.string.error_feed_url_exists, Toast.LENGTH_SHORT).show();
+        } else {
+            cursor.close();
+            ContentValues values = new ContentValues();
+
+            values.put(FeedColumns.URL, url);
+            values.putNull(FeedColumns.ERROR);
+
+            if (name.trim().length() > 0) {
+                values.put(FeedColumns.NAME, name);
+            }
+            values.put(FeedColumns.RETRIEVE_FULLTEXT, retrieveFullText ? 1 : null);
+            cr.insert(FeedColumns.CONTENT_URI, values);
+        }
+    }
+
     private static String getSearchWhereClause(String uriSearchParam) {
         uriSearchParam = Uri.decode(uriSearchParam).trim();
 
         if (!uriSearchParam.isEmpty()) {
             uriSearchParam = DatabaseUtils.sqlEscapeString("%" + Uri.decode(uriSearchParam) + "%");
-            return new StringBuilder(EntryColumns.TITLE).append(" LIKE ").append(uriSearchParam).append(Constants.DB_OR)
-                    .append(EntryColumns.ABSTRACT).append(" LIKE ").append(uriSearchParam).append(Constants.DB_OR)
-                    .append(EntryColumns.MOBILIZED_HTML).append(" LIKE ").append(uriSearchParam).toString();
+            return EntryColumns.TITLE + " LIKE " + uriSearchParam + Constants.DB_OR + EntryColumns.ABSTRACT + " LIKE " + uriSearchParam + Constants.DB_OR + EntryColumns.MOBILIZED_HTML + " LIKE " + uriSearchParam;
         } else {
             return "1 = 2"; // to have 0 result with an empty search
         }

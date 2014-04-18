@@ -80,6 +80,7 @@ import net.fred.feedex.adapter.FiltersCursorAdapter;
 import net.fred.feedex.loader.BaseLoader;
 import net.fred.feedex.provider.FeedData.FeedColumns;
 import net.fred.feedex.provider.FeedData.FilterColumns;
+import net.fred.feedex.provider.FeedDataContentProvider;
 import net.fred.feedex.utils.NetworkUtils;
 import net.fred.feedex.utils.UiUtils;
 
@@ -106,7 +107,6 @@ public class EditFeedActivity extends ListActivity implements LoaderManager.Load
     private EditText mNameEditText, mUrlEditText;
     private CheckBox mRetrieveFulltextCb;
     private ListView mFiltersListView;
-    private String mPreviousName;
 
     private FiltersCursorAdapter mFiltersCursorAdapter;
 
@@ -292,8 +292,7 @@ public class EditFeedActivity extends ListActivity implements LoaderManager.Load
                 Cursor cursor = getContentResolver().query(intent.getData(), FEED_PROJECTION, null, null, null);
 
                 if (cursor.moveToNext()) {
-                    mPreviousName = cursor.getString(0);
-                    mNameEditText.setText(mPreviousName);
+                    mNameEditText.setText(cursor.getString(0));
                     mUrlEditText.setText(cursor.getString(1));
                     mRetrieveFulltextCb.setChecked(cursor.getInt(2) == 1);
                     cursor.close();
@@ -501,34 +500,7 @@ public class EditFeedActivity extends ListActivity implements LoaderManager.Load
     public void onClickOk(View view) {
         // only in insert mode
 
-        String url = mUrlEditText.getText().toString();
-        ContentResolver cr = getContentResolver();
-
-        if (!url.startsWith(Constants.HTTP_SCHEME) && !url.startsWith(Constants.HTTPS_SCHEME)) {
-            url = Constants.HTTP_SCHEME + url;
-        }
-
-        Cursor cursor = cr.query(FeedColumns.CONTENT_URI, null, FeedColumns.URL + Constants.DB_ARG,
-                new String[]{url}, null);
-
-        if (cursor.moveToFirst()) {
-            cursor.close();
-            Toast.makeText(EditFeedActivity.this, R.string.error_feed_url_exists, Toast.LENGTH_LONG).show();
-        } else {
-            cursor.close();
-            ContentValues values = new ContentValues();
-
-            values.put(FeedColumns.URL, url);
-            values.putNull(FeedColumns.ERROR);
-
-            String name = mNameEditText.getText().toString();
-
-            if (name.trim().length() > 0) {
-                values.put(FeedColumns.NAME, name);
-            }
-            values.put(FeedColumns.RETRIEVE_FULLTEXT, mRetrieveFulltextCb.isChecked() ? 1 : null);
-            cr.insert(FeedColumns.CONTENT_URI, values);
-        }
+        FeedDataContentProvider.addFeed(this, mUrlEditText.getText().toString(), mNameEditText.getText().toString(), mRetrieveFulltextCb.isChecked());
 
         setResult(RESULT_OK);
         finish();
@@ -578,7 +550,7 @@ class GetFeedSearchResultsLoader extends BaseLoader<ArrayList<HashMap<String, St
         try {
             HttpURLConnection conn = NetworkUtils.setupConnection("https://ajax.googleapis.com/ajax/services/feed/find?v=1.0&q=" + mSearchText);
             try {
-                String jsonStr = new String(NetworkUtils.getBytes(NetworkUtils.getConnectionInputStream(conn)));
+                String jsonStr = new String(NetworkUtils.getBytes(conn.getInputStream()));
 
                 // Parse results
                 final ArrayList<HashMap<String, String>> results = new ArrayList<HashMap<String, String>>();

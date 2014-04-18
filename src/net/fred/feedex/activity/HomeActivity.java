@@ -19,8 +19,10 @@
 
 package net.fred.feedex.activity;
 
+import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
@@ -59,22 +61,20 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
 
     private static final String STATE_CURRENT_DRAWER_POS = "STATE_CURRENT_DRAWER_POS";
 
-    private static final String FEED_UNREAD_NUMBER = new StringBuilder("(SELECT COUNT(*) FROM ").append(EntryColumns.TABLE_NAME).append(" WHERE ").append(EntryColumns.IS_READ)
-            .append(" IS NULL AND ").append(EntryColumns.FEED_ID).append('=').append(FeedColumns.TABLE_NAME).append('.').append(FeedColumns._ID).append(')').toString();
+    private static final String FEED_UNREAD_NUMBER = "(SELECT " + Constants.DB_COUNT + " FROM " + EntryColumns.TABLE_NAME + " WHERE " +
+            EntryColumns.IS_READ + " IS NULL AND " + EntryColumns.FEED_ID + '=' + FeedColumns.TABLE_NAME + '.' + FeedColumns._ID + ')';
 
-    private static final String WHERE_UNREAD_ONLY = new StringBuilder("(SELECT COUNT(*) FROM ").append(EntryColumns.TABLE_NAME).append(" WHERE ").append(EntryColumns.IS_READ)
-            .append(" IS NULL AND ").append(EntryColumns.FEED_ID).append("=").append(FeedColumns.TABLE_NAME).append('.').append(FeedColumns._ID).append(") > 0").append(" OR (")
-            .append(FeedColumns.IS_GROUP).append("=1 AND (SELECT COUNT(*) FROM ").append(FeedData.ENTRIES_TABLE_WITH_FEED_INFO).append(" WHERE ").append(EntryColumns.IS_READ)
-            .append(" IS NULL AND ").append(FeedColumns.GROUP_ID).append('=').append(FeedColumns.TABLE_NAME).append('.').append(FeedColumns._ID).append(") > 0)").toString();
+    private static final String WHERE_UNREAD_ONLY = "(SELECT " + Constants.DB_COUNT + " FROM " + EntryColumns.TABLE_NAME + " WHERE " +
+            EntryColumns.IS_READ + " IS NULL AND " + EntryColumns.FEED_ID + "=" + FeedColumns.TABLE_NAME + '.' + FeedColumns._ID + ") > 0" +
+            " OR (" + FeedColumns.IS_GROUP + "=1 AND (SELECT " + Constants.DB_COUNT + " FROM " + FeedData.ENTRIES_TABLE_WITH_FEED_INFO +
+            " WHERE " + EntryColumns.IS_READ + " IS NULL AND " + FeedColumns.GROUP_ID + '=' + FeedColumns.TABLE_NAME + '.' + FeedColumns._ID +
+            ") > 0)";
 
     private static final int LOADER_ID = 0;
 
-    private final SharedPreferences.OnSharedPreferenceChangeListener isRefreshingListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+    private final SharedPreferences.OnSharedPreferenceChangeListener mShowReadListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (PrefUtils.IS_REFRESHING.equals(key)) {
-                getProgressBar().setVisibility(PrefUtils.getBoolean(PrefUtils.IS_REFRESHING, false) ? View.VISIBLE : View.GONE);
-            }
             if (PrefUtils.SHOW_READ.equals(key)) {
                 getLoaderManager().restartLoader(LOADER_ID, null, HomeActivity.this);
             }
@@ -94,6 +94,8 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
     private boolean mIsDrawerMoving = false;
 
     private boolean mCanQuit = false;
+
+	private int drawerIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,8 +127,13 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
-
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.drawable.ic_drawer, R.string.drawer_open, R.string.drawer_close) {
+        if (!PrefUtils.getBoolean(PrefUtils.LIGHT_THEME, true)) {
+        	drawerIcon = R.drawable.ic_drawer_dark;
+        }
+        else {
+        	drawerIcon = R.drawable.ic_drawer_light;
+        }
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, drawerIcon, R.string.drawer_open, R.string.drawer_close) {
             @Override
             public void onDrawerStateChanged(int newState) {
                 if (mIsDrawerMoving && newState == DrawerLayout.STATE_IDLE) {
@@ -194,13 +201,12 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
     @Override
     protected void onResume() {
         super.onResume();
-        getProgressBar().setVisibility(PrefUtils.getBoolean(PrefUtils.IS_REFRESHING, false) ? View.VISIBLE : View.GONE);
-        PrefUtils.registerOnPrefChangeListener(isRefreshingListener);
+        PrefUtils.registerOnPrefChangeListener(mShowReadListener);
     }
 
     @Override
     protected void onPause() {
-        PrefUtils.unregisterOnPrefChangeListener(isRefreshingListener);
+        PrefUtils.unregisterOnPrefChangeListener(mShowReadListener);
         super.onPause();
     }
 
@@ -294,7 +300,8 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
         CursorLoader cursorLoader = new CursorLoader(this, FeedColumns.GROUPED_FEEDS_CONTENT_URI, new String[]{FeedColumns._ID, FeedColumns.URL, FeedColumns.NAME,
                 FeedColumns.IS_GROUP, FeedColumns.GROUP_ID, FeedColumns.ICON, FeedColumns.LAST_UPDATE, FeedColumns.ERROR, FEED_UNREAD_NUMBER},
-                PrefUtils.getBoolean(PrefUtils.SHOW_READ, true) ? "" : WHERE_UNREAD_ONLY, null, null);
+                PrefUtils.getBoolean(PrefUtils.SHOW_READ, true) ? "" : WHERE_UNREAD_ONLY, null, null
+        );
         cursorLoader.setUpdateThrottle(Constants.UPDATE_THROTTLE_DELAY);
         return cursorLoader;
     }
@@ -373,6 +380,19 @@ public class HomeActivity extends BaseActivity implements LoaderManager.LoaderCa
                     mDrawerLayout.openDrawer(mDrawerList);
                 }
             }, 500);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.welcome_title)
+                    .setItems(new CharSequence[]{getString(R.string.google_news_title), getString(R.string.add_custom_feed)}, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == 1) {
+                                startActivity(new Intent(Intent.ACTION_INSERT).setData(FeedColumns.CONTENT_URI));
+                            } else {
+                                startActivity(new Intent(HomeActivity.this, AddGoogleNewsActivity.class));
+                            }
+                        }
+                    });
+            builder.show();
         }
     }
 }
